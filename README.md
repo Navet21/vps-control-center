@@ -1,7 +1,16 @@
 # VPS Control Center
 
 Private web dashboard to monitor and operate Docker-based applications deployed on a VPS.
-Built with NestJS, React and Docker.
+
+## 🎯 Goal
+
+Replace repetitive SSH operations with a secure web interface for predefined maintenance actions.
+
+This project is focused on real-world usage, not as a generic Docker manager.
+
+---
+
+## 🚀 Features
 
 - VPS system monitoring (CPU, RAM, disk, uptime)
 - Docker container management
@@ -10,34 +19,86 @@ Built with NestJS, React and Docker.
 - Audit log system
 - Secure whitelist-based command execution
 
-- ## Tech Stack
+---
 
-- NestJS
-- React
-- TypeScript
-- Docker
-- PostgreSQL (planned)
-- JWT Auth (planned)
+## 🧠 Architecture
 
-## Current Status
+Frontend (React) → Backend (NestJS) → Service Layer → Docker / System
+
+The frontend never interacts directly with the system.
+All operations are validated and controlled in the backend.
+
+---
+
+## 🔐 Security Approach
+
+This project does **not** expose:
+
+- ❌ Free terminal access  
+- ❌ Arbitrary shell execution  
+- ❌ User-defined commands  
+
+Instead:
+
+- ✅ Only predefined actions are allowed  
+- ✅ Services are validated through a whitelist  
+- ✅ Docker commands are executed safely (`execFile`)  
+
+---
+
+## 📦 Tech Stack
+
+- **Frontend:** React + TypeScript + Vite  
+- **Backend:** NestJS + TypeScript  
+- **Infrastructure:** Docker  
+- **Database (planned):** PostgreSQL  
+- **Auth (planned):** JWT  
+
+---
+
+## 📊 Current Status
 
 MVP in progress.
 
-Implemented:
-- System status endpoint
-- Docker services listing
-- Logs viewer
-- Controlled container restart
-- In-memory audit log
+### Implemented
 
-Next:
-- PostgreSQL persistence
-- Authentication
-- Protected endpoints
-- Production deployment
+- System status endpoint  
+- Docker services listing  
+- Logs viewer  
+- Controlled restart actions  
+- In-memory audit log  
 
-## Security Approach
+### In progress
 
-This project does not expose a free terminal or arbitrary shell execution.
+- PostgreSQL persistence for audit logs  
+- Authentication (JWT)  
+- Protected endpoints  
 
-All Docker operations are executed through a whitelist-based service layer.
+### Planned
+
+- Production deployment on VPS  
+- Improved UI/UX  
+- Real-time updates  
+
+---
+
+## 🧩 Managed Services
+
+This panel is designed to control specific applications, not generic containers.
+
+Example:
+
+- Poker Board Trainer  
+- Your Pigeons  
+- Portfolio  
+
+---
+
+## ⚙️ Local Development
+
+### Backend
+
+```bash
+cd apps/api
+npm install
+npm run start:dev
