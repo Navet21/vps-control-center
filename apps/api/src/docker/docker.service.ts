@@ -17,8 +17,6 @@ export class DockerService {
     this.allowedContainers = this.parseAllowedContainers();
   }
 
-  //Métodos Públicos
-
   async getContainers() {
     try {
       const { stdout } = await execFileAsync('docker', [
@@ -27,7 +25,7 @@ export class DockerService {
         '{{json .}}',
       ]);
 
-      const lines = stdout.trim().split('\n');
+      const lines = stdout.trim().split('\n').filter(Boolean);
 
       return lines.map((line) => JSON.parse(line));
     } catch {
@@ -46,15 +44,15 @@ export class DockerService {
         '100',
       ]);
 
-      this.auditService.log('logs', service, true);
+      await this.auditService.success('VIEW_LOGS', service);
 
       return {
         service,
         container,
         logs: stdout,
       };
-    } catch {
-      this.auditService.log('logs', service, false);
+    } catch (error) {
+      await this.auditService.error('VIEW_LOGS', service, error);
 
       throw new InternalServerErrorException(
         `Error getting logs for ${service}`,
@@ -68,14 +66,14 @@ export class DockerService {
     try {
       await execFileAsync('docker', ['restart', container]);
 
-      this.auditService.log('restart', service, true);
+      await this.auditService.success('RESTART_SERVICE', service);
 
       return {
         service,
         status: 'restarted',
       };
-    } catch {
-      this.auditService.log('restart', service, false);
+    } catch (error) {
+      await this.auditService.error('RESTART_SERVICE', service, error);
 
       throw new InternalServerErrorException(`Error restarting ${service}`);
     }
@@ -89,22 +87,30 @@ export class DockerService {
   }
 
   async getServicesWithStatus() {
-    const containers = await this.getContainers();
+    try {
+      const containers = await this.getContainers();
 
-    return Object.entries(this.allowedContainers).map(
-      ([alias, containerName]) => {
-        const container = containers.find((c) => c.Names === containerName);
+      const services = Object.entries(this.allowedContainers).map(
+        ([alias, containerName]) => {
+          const container = containers.find((c) => c.Names === containerName);
 
-        return {
-          alias,
-          container: containerName,
-          status: container ? 'running' : 'stopped',
-        };
-      },
-    );
+          return {
+            alias,
+            container: containerName,
+            status: container ? 'running' : 'stopped',
+          };
+        },
+      );
+
+      await this.auditService.success('SERVICE_LIST_READ');
+
+      return services;
+    } catch (error) {
+      await this.auditService.error('SERVICE_LIST_READ', null, error);
+
+      throw error;
+    }
   }
-
-  //Métodos privados
 
   private getContainer(service: string): string {
     const container = this.allowedContainers[service];
