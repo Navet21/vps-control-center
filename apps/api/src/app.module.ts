@@ -5,9 +5,22 @@ import { SystemModule } from './system/system.module';
 import { DockerModule } from './docker/docker.module';
 import { AuditModule } from './audit/audit.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [SystemModule, DockerModule, AuditModule, PrismaModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    SystemModule,
+    DockerModule,
+    AuditModule,
+    PrismaModule,
+    AuthModule,
+    UsersModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

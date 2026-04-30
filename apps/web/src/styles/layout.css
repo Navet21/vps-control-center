@@ -1,0 +1,12 @@
+.sidebar {
+  @apply w-64 bg-gray-900 border-r border-gray-800 h-screen flex flex-col;
+}
+
+.sidebar-link {
+  @apply px-3 py-2 text-gray-400 rounded flex items-center 
+  hover:bg-gray-800 hover:text-white transition;
+}
+
+.sidebar-link-active {
+  @apply bg-gray-800 text-white;
+}

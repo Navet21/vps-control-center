@@ -1,40 +1,30 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { getServices, restartService } from '../api/docker.api';
+import { useEffect, useState } from "react";
+import { getServices, restartService } from "../api/docker.api";
+import { Link } from "react-router-dom";
+import { Modal } from "../components/ui/Modal";
 
 type ManagedService = {
   alias: string;
   container: string;
-  status: 'running' | 'stopped';
+  status: "running" | "stopped";
 };
 
 export function ServicesPage() {
   const [services, setServices] = useState<ManagedService[]>([]);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const [selectedService, setSelectedService] = useState<string | null>(null);
+  const [restarting, setRestarting] = useState(false);
 
   async function loadServices() {
     try {
-      setLoading(true);
       const data = await getServices();
       setServices(data);
     } catch {
-      setError('Error loading services');
+      setError("Error cargando servicios");
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function handleRestart(alias: string) {
-    const confirmed = window.confirm(`Restart ${alias}?`);
-
-    if (!confirmed) return;
-
-    try {
-      await restartService(alias);
-      await loadServices();
-    } catch {
-      alert('Error restarting service');
     }
   }
 
@@ -42,71 +32,104 @@ export function ServicesPage() {
     loadServices();
   }, []);
 
-  if (error) return <p>{error}</p>;
+  async function confirmRestart() {
+    if (!selectedService) return;
+
+    setRestarting(true);
+
+    try {
+      await restartService(selectedService);
+      await loadServices();
+      setSelectedService(null);
+    } catch {
+      alert("Error reiniciando servicio");
+    } finally {
+      setRestarting(false);
+    }
+  }
+
+  if (loading) {
+    return <p className="text-gray-400">Cargando servicios...</p>;
+  }
+
+  if (error) {
+    return <p className="text-red-400">{error}</p>;
+  }
 
   return (
-    <section>
-      <h2>Services</h2>
+    <div>
+      {/* HEADER */}
+      <div className="mb-6">
+        <h1 className="text-xl font-semibold">Servicios</h1>
+        <p className="text-sm text-gray-400">
+          Gestión de contenedores Docker
+        </p>
+      </div>
 
-      <button onClick={loadServices} disabled={loading}>
-        {loading ? 'Loading...' : 'Refresh'}
-      </button>
+      {/* LISTA */}
+      <div className="grid gap-4">
+        {services.map((service) => {
+          const isRunning = service.status === "running";
 
-      <table
-        style={{
-          width: '100%',
-          marginTop: '16px',
-          borderCollapse: 'collapse',
-        }}
-      >
-        <thead>
-          <tr>
-            <th>Alias</th>
-            <th>Container</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
+          return (
+            <div
+              key={service.alias}
+              className="card flex items-center justify-between"
+            >
+              {/* INFO */}
+              <div>
+                <p className="text-lg font-semibold">
+                  {service.alias}
+                </p>
 
-        <tbody>
-          {services.map((service) => (
-            <tr key={service.alias}>
-              <td>{service.alias}</td>
+                <p className="text-xs text-gray-500">
+                  {service.container}
+                </p>
 
-              <td>{service.container}</td>
-
-              <td>
                 <span
-                  style={{
-                    color:
-                      service.status === 'running' ? 'green' : 'red',
-                    fontWeight: 'bold',
-                  }}
+                  className={`badge mt-2 ${
+                    isRunning ? "badge-green" : "badge-red"
+                  }`}
                 >
-                  {service.status}
+                  {isRunning ? "Running" : "Stopped"}
                 </span>
-              </td>
+              </div>
 
-              <td>
-                <Link to={`/logs/${service.alias}`}>Logs</Link>
-
-                {' '}
+              {/* ACTIONS */}
+              <div className="flex items-center gap-3">
+                <Link
+                  to={`/logs/${service.alias}`}
+                  className="text-sm text-blue-400 hover:underline"
+                >
+                  Logs
+                </Link>
 
                 <button
-                  onClick={() => handleRestart(service.alias)}
-                  style={{ marginLeft: '8px' }}
+                  onClick={() => setSelectedService(service.alias)}
+                  className={`button ${
+                    isRunning ? "button-danger" : "button-secondary"
+                  }`}
                 >
-                  Restart
+                  Reiniciar
                 </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
-      {services.length === 0 && !loading && (
-        <p style={{ marginTop: '16px' }}>No services found</p>
-      )}
-    </section>
+      {/* MODAL */}
+      <Modal
+        isOpen={!!selectedService}
+        title="Confirmar reinicio"
+        onCancel={() => setSelectedService(null)}
+        onConfirm={confirmRestart}
+        loading={restarting}
+        confirmText="Reiniciar"
+      >
+        ¿Seguro que quieres reiniciar el servicio{" "}
+        <strong>{selectedService}</strong>?
+      </Modal>
+    </div>
   );
 }
