@@ -31,7 +31,7 @@ jobs:
           push: true
           tags: navet21dev/vps-control-frontend:latest
           build-args: |
-            VITE_API_URL=https://control.navet21dev.es/api
+            VITE_API_URL=https://vps.navet21dev.es/api
 
 
       - name: Build & Push Backend
