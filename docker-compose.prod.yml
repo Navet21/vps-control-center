@@ -1,0 +1,62 @@
+services:
+  vps-frontend:
+    image: navet21dev/vps-control-frontend:latest
+
+    container_name: vps-frontend
+
+    expose:
+      - "80"
+
+    networks:
+      - caddy_net
+
+    restart: unless-stopped
+
+  vps-backend:
+    image: navet21dev/vps-control-backend:latest
+
+    container_name: vps-backend
+
+    env_file:
+      - .env
+
+    expose:
+      - "3000"
+
+    depends_on:
+      - postgres
+
+    networks:
+      - internal
+      - caddy_net
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+
+    container_name: vps-postgres
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    networks:
+      - internal
+
+    restart: unless-stopped
+
+networks:
+  internal:
+  caddy_net:
+    external: true
+
+volumes:
+  postgres_data:
